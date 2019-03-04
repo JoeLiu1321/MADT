@@ -6,8 +6,8 @@ export const LINE = {
     // channelAccessToken:"9gGojsrM36023RVcASaXoVUwNJrWJ0GsGty3fYmwWlORH7L+xVVzJfQiQbw/QaRGMWb+oHG8LbEjYjz4pGWTPkTcff2dPLkfM4mUIDV2awyEnTJTWLH+exWp3ayrbIT34ZXubtXCnpM5AT/8tb+eRAdB04t89/1O/w1cDnyilFU="
 }
 export const WECHAT = {
-    appid: "<your_appid>",
-    appSecret: "<your_appSecret>",
-    token: "<your_token>",
+    appid: "wx89a9534a7ca00356",
+    appSecret: "f22418ffdae4fc5b790ed41d23923b93",
+    token: "fgjksdlklkdjur8uwioweoifjdfs",
     checkSignature: true
 }

@@ -60,7 +60,7 @@ const follow = (userId: string) => {
         userId: userId,
         userIntent: "follow",
         replyMessage: message
-    } as DialogMessage
+    } as DialogMessage|any
     pushService.pushMessage(dialogMessage)
 }
 
@@ -71,6 +71,6 @@ const join = (userId: string) => {
         userId: userId,
         userIntent: "join",
         replyMessage: message
-    } as DialogMessage
+    } as DialogMessage|any
     pushService.pushMessage(dialogMessage)
 }

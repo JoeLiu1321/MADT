@@ -19,7 +19,8 @@
     "node-cache": "^4.2.0",
     "npm": "6.8.0",
     "query-string": "^6.2.0",
-    "time-checker": "^0.1.2"
+    "time-checker": "^0.1.2",
+    "wechat":"^2.1.0"
   },
   "devDependencies": {
     "typescript": "^3.2.2"

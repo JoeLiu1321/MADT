@@ -12,7 +12,7 @@ export const toTextMessage = (message: string|any): Message => {
     return textMessage
 }
 
-export const pushMessage = async (userId: string, lineMessage: Message | Message[]): Promise<any> => {
+export const pushMessage = async (userId: string, lineMessage: Message | Message[]|any): Promise<any> => {
     const accessToken = await getAccessToken()
     const lineClient = new Client({
         channelAccessToken: accessToken
