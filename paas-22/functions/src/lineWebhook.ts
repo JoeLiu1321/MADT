@@ -1,5 +1,3 @@
-// const moduleName = "lineWebhook"
-
 import * as functions from 'firebase-functions'
 import { WebhookEvent, validateSignature } from "@line/bot-sdk"
 
@@ -41,11 +39,14 @@ const eventDispatcher = (event: WebhookEvent): void => {
             break
         case "message":
             if (event.message.type == "text") {
-                const userIntent = event.message.text
                 const dialogMessage = {
                     channel: "Line",
                     userId: userId,
-                    userIntent: userIntent,
+                    userMessage: {
+                        type: "text",
+                        intent: event.message.text
+                    },
+                    replyMessage:{}
                 } as DialogMessage
                 chatBotDialog.messageDispatcher(dialogMessage)
             }
@@ -58,9 +59,11 @@ const follow = (userId: string) => {
     const dialogMessage = {
         channel: "Line",
         userId: userId,
-        userIntent: "follow",
-        replyMessage: message
-    } as DialogMessage|any
+        replyMessage: {
+            type: "text",
+            message: message
+        }
+    } as DialogMessage
     pushService.pushMessage(dialogMessage)
 }
 
@@ -69,8 +72,10 @@ const join = (userId: string) => {
     const dialogMessage = {
         channel: "Line",
         userId: userId,
-        userIntent: "join",
-        replyMessage: message
-    } as DialogMessage|any
+        replyMessage: {
+            type: "text",
+            message: message
+        }
+    } as DialogMessage
     pushService.pushMessage(dialogMessage)
 }

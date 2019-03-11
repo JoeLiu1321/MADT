@@ -1,63 +1,17 @@
 import { WECHAT } from './chatbotConfig'
 import axios from 'axios'
 
-import { DialogMessage} from "./appsModel";
+import { DialogMessage } from "./appsModel";
+import { ReplyMessage } from './appsModel';
 
-export const toTextMessage = (dialogMessage: DialogMessage|any) => {
+export const toTextMessage = (dialogMessage:DialogMessage,replyMessage: ReplyMessage) => {
     const textMessage = {
         touser: dialogMessage.userId,
         msgtype: "text",
-        text: { content: dialogMessage.replyMessage.message }
+        text: { content: replyMessage.message }
     }
     return textMessage
 }
-
-export const toTextMessages = (dialogMessage: DialogMessage|any) => {
-    let textMessages = []
-    for (const message of dialogMessage.replyMessage.messages) {
-        dialogMessage.replyMessage.message = `品名：${message.name}\n價格：${message.price}\n<a href="${message.doc}">DM</a>`
-        textMessages.push(toTextMessage(dialogMessage))
-    }
-        
-    return textMessages
-}
-
-export const toImageMessage = (dialogMessage: DialogMessage|any) => {
-    const imageMessage = {
-        touser: dialogMessage.userId,
-        msgtype: "image",
-        image:
-        {
-            media_id: dialogMessage.replyMessage.mediaId
-        }
-    }
-    return imageMessage
-}
-
-export const toVoiceMessage = (dialogMessage: DialogMessage|any) => {
-    const voiceMessage = {
-        touser: dialogMessage.userId,
-        msgtype: "voice",
-        voice:
-        {
-            media_id: dialogMessage.replyMessage.mediaId
-        }
-    }
-    return voiceMessage
-}
-
-export const toVideoMessage = (dialogMessage: DialogMessage|any) => {
-    const videoMessage = {
-        touser: dialogMessage.userId,
-        msgtype: "video",
-        video:
-        {
-            media_id: dialogMessage.replyMessage.mediaId
-        }
-    }
-    return videoMessage
-}
-
 
 export const pushMessage = async (wechatMessage:any): Promise<any> => {
     const accessToken = await getAccessToken()

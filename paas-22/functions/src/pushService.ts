@@ -3,19 +3,16 @@ import * as weChatService from "./weChatService"
 import { DialogMessage } from "./appsModel"
 
 
-export const pushMessage = async (dialogMessages: DialogMessage | DialogMessage[]|any) => {
-    if (!Array.isArray(dialogMessages)) {
-        dialogMessages = [dialogMessages]
+export const pushMessage = async (dialogMessage: DialogMessage|any) => {
+    if (!Array.isArray(dialogMessage.replyMessage)){
+        dialogMessage.replyMessage=[dialogMessage.replyMessage]
     }
-    for (const dialogMessage of dialogMessages) {
+    for (const replyMessage of dialogMessage.replyMessage) {
         if (dialogMessage.channel == "Line") {
-            let lineMessage
-            switch (dialogMessage.replyMessage.type) {
+            let lineMessage:any
+            switch (replyMessage.type) {
                 case "text":
-                    lineMessage = lineService.toTextMessage(dialogMessage)
-                    break
-                case "carousel":
-                    // lineMessage = lineService.toCarouselMessage(dialogMessage)
+                    lineMessage = lineService.toTextMessage(replyMessage)
                     break
                 default:
                     break
@@ -24,21 +21,9 @@ export const pushMessage = async (dialogMessages: DialogMessage | DialogMessage[
         }
         else if (dialogMessage.channel == "WeChat") {
             let weChatMessage
-            switch (dialogMessage.replyMessage.type) {
+            switch (replyMessage.type) {
                 case "text":
-                    weChatMessage = weChatService.toTextMessage(dialogMessage)
-                    break
-                case "carousel":
-                    weChatMessage = weChatService.toTextMessages(dialogMessage)
-                    break
-                case "image":
-                    weChatMessage = weChatService.toImageMessage(dialogMessage)
-                    break
-                case "voice":
-                    weChatMessage = weChatService.toVoiceMessage(dialogMessage)
-                    break
-                case "video":
-                    weChatMessage = weChatService.toVideoMessage(dialogMessage)
+                    weChatMessage = weChatService.toTextMessage(dialogMessage ,replyMessage)
                     break
                 default:
                     break

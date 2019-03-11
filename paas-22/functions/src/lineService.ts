@@ -3,16 +3,17 @@ const qs = require('querystring');
 import axios from 'axios'
 
 import { LINE } from "./chatbotConfig"
+import { ReplyMessage } from "./appsModel";
 
-export const toTextMessage = (message: string|any): Message => {
+export const toTextMessage = (replyMessage: ReplyMessage): Message => {
     const textMessage: Message = {
         type: "text",
-        text: message
+        text: replyMessage.message
     }
     return textMessage
 }
 
-export const pushMessage = async (userId: string, lineMessage: Message | Message[]|any): Promise<any> => {
+export const pushMessage = async (userId: string, lineMessage: Message | Message[]): Promise<any> => {
     const accessToken = await getAccessToken()
     const lineClient = new Client({
         channelAccessToken: accessToken
@@ -45,6 +46,9 @@ const getAccessToken = async (): Promise<string> => {
 
     return axios.post(apiUrl, qs.stringify(body), requestConfig).then(result => {
         accessToken = result.data.access_token
+        console.log("Get LineAccessToken : ", accessToken)
         return accessToken
     }).catch(null)
 }
+
+

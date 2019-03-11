@@ -1,8 +1,5 @@
-// const moduleName = "weChatWebhook"
-
 import * as functions from 'firebase-functions'
-// import * as wechat from 'wechat'
-const wechat=require('wechat')
+const wechat =require("wechat")
 import { WECHAT } from "./chatbotConfig"
 import * as chatBotDialog from "./chatBotDialog"
 import * as pushService from "./pushService"
@@ -34,29 +31,19 @@ const eventDispatcher = (event:any) => {
         }
     }
     else {
-        let dialogMessage = {
+        let dialogMessage:any = {
             channel: "WeChat",
             userId: event.FromUserName,
             userMessage: {
                 type: event.MsgType
             },
             replyMessage: {}
-        } as DialogMessage|any
+        } as DialogMessage
 
         switch (event.MsgType) {
             case "text":
                 dialogMessage.userMessage.intent = event.Content
                 break
-            case "image":
-            case "voice":
-            case "video":
-                dialogMessage.userMessage.mediaId = event.MediaId
-                break
-            case "location":
-                dialogMessage.userMessage.locationX = event.Location_X
-                dialogMessage.userMessage.locationY = event.Location_Y
-                break
-
         }
         chatBotDialog.messageDispatcher(dialogMessage)
     }
