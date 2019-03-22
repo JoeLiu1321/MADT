@@ -1,5 +1,4 @@
 import * as functions from "firebase-functions"
-// import * as dialogflow from "dialogflow"
 const dialogflow=require("dialogflow")
 import * as assistantV2 from "watson-developer-cloud/assistant/v2"
 import { DIALOGFLOW , ASSISTANT, shopServiceUrl, sessionServiceUrl } from "./chatbotConfig"
@@ -76,7 +75,7 @@ const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
         case "handOver":
             const shop = response.output.actions[0].parameters.shop
             if (shop == "保險商店") {
-                axios.post(shopServiceUrl + "handOverToShop", {
+                axios.post(shopServiceUrl, {
                     shopMessage: {
                         channel: dialogMessage.channel,
                         userId: dialogMessage.userId,
@@ -101,7 +100,7 @@ const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
     }
 }
 
-const dialogAgent = async (request:any, dialogMessage: DialogMessage|any) => {
+const dialogAgent = async (request:any, dialogMessage: DialogMessage) => {
     switch (dialogMessage.agent){
         case "dialogFlow":
             return sessionClient.detectIntent(request).then(async (responses:any) => {
@@ -136,7 +135,7 @@ const dialogAgent = async (request:any, dialogMessage: DialogMessage|any) => {
                     context: request.context,
                     assistant_id: ASSISTANT.assistantId,
                     session_id: sessionId
-                }, async (err:any, response:any) => {
+                }, async (err, response:any) => {
                     const messages = response.output.generic
                     let replyMessages = []
                     for (const message of messages) {
@@ -157,7 +156,7 @@ export const getSessionId = functions.https.onRequest((req, res) => {
     const userId = req.body.userId
     const sessionId = cache.get(userId)
     if (!sessionId) {
-        assistant.createSession({ assistant_id: ASSISTANT.assistantId }, (err:any, result:any) => {
+        assistant.createSession({ assistant_id: ASSISTANT.assistantId }, (err, result:any) => {
             cache.set(userId, result.session_id, 300)
             res.send(result.session_id)
         })

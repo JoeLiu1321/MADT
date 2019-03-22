@@ -1,8 +1,6 @@
-// const moduleName = "weChatWebhook"
-
 import * as functions from 'firebase-functions'
-// import * as wechat from 'wechat'
 const wechat=require("wechat")
+
 import { WECHAT } from "./chatbotConfig"
 import * as chatBotDialog from "./chatBotDialog"
 import * as pushService from "./pushService"
@@ -38,8 +36,7 @@ const eventDispatcher = (event:any) => {
             channel: "WeChat",
             userId: event.FromUserName,
             userMessage: {
-                type: event.MsgType,
-                intent : ""
+                type: event.MsgType
             },
             replyMessage: {}
         } as DialogMessage|any

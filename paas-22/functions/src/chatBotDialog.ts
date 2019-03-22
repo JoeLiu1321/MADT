@@ -1,13 +1,13 @@
 import * as functions from "firebase-functions"
 import * as structjson from "./structjson"
 import { DIALOGFLOW, paymentServiceUrl } from "./chatbotConfig"
+
 import * as pushService from "./pushService"
 import { DialogMessage } from "./appsModel"
 import * as productService from "./productService"
-import axios from "axios"
-// import { Agent } from "http";
-const dialogflow=require("dialogflow")
 
+import axios from "axios"
+const dialogflow=require("dialogflow")
 
 const sessionClient = new dialogflow.SessionsClient({ keyFilename: DIALOGFLOW.path });
 
@@ -43,7 +43,7 @@ const actionDispatcher = async (queryResult:any, dialogMessage: DialogMessage|an
             price = productService.getPrice(parameters.product)
             dialogMessage.replyMessage[0].message = dialogMessage.replyMessage[0].message.replace('%{price}%', price)
             pushService.pushMessage(dialogMessage)
-            axios.post(paymentServiceUrl + "handOverToPayment", {
+            axios.post(paymentServiceUrl, {
                 shopMessage: {
                     channel: dialogMessage.channel,
                     userId: dialogMessage.userId,
@@ -84,7 +84,7 @@ const actionDispatcher = async (queryResult:any, dialogMessage: DialogMessage|an
 }
 
 const dialogflowAgent = (request:any, dialogMessage: DialogMessage) => {
-    return sessionClient.detectIntent(request).then(async( responses:any) => {
+    return sessionClient.detectIntent(request).then(async (responses:any) => {
         const result = responses[0].queryResult
         const fulfillmentMessages = result.fulfillmentMessages
         let replyMessages = []
@@ -110,23 +110,21 @@ const dialogflowAgent = (request:any, dialogMessage: DialogMessage) => {
 export const handOverToShop = functions.https.onRequest((req, res) => {
     const shopMessage = req.body.shopMessage
     const dialogMessage : DialogMessage = {
-        channel : shopMessage.channel,
-        userId : shopMessage.userId,
-        agent : ""
+        channel: shopMessage.channel,
+        userId: shopMessage.userId
     }
     const sessionId = dialogMessage.userId
     const sessionPath = sessionClient.sessionPath(DIALOGFLOW.projectId, sessionId)
     const queryInput = {
         event: {
-            name : shopMessage.event,
-            languageCode : DIALOGFLOW.languageCode
+            name: shopMessage.event,
+            languageCode: DIALOGFLOW.languageCode
         }
     }
     const request = {
         session: sessionPath,
         queryInput: queryInput
     }
-    
     dialogMessage.agent = "dialogFlow"
     dialogflowAgent(request, dialogMessage)
     res.sendStatus(200)

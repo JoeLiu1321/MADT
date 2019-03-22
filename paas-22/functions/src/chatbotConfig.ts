@@ -17,4 +17,4 @@ export const DIALOGFLOW = {
     languageCode: 'zh-TW'
 }
 
-export const paymentServiceUrl = "https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
+export const paymentServiceUrl = "https://417c17dd.ngrok.io/paas-hw1-22-232110/us-central1/handOverToPayment"

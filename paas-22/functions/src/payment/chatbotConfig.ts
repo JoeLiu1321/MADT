@@ -1,8 +1,8 @@
 export const chatbot = "黑心支付"
 
 export const LINE = {
-    channelId: "1557351175",
-    channelSecret: "f10fdc7f0aeb757da348ec0c6be6349a",
+    channelId: "1557840648",
+    channelSecret: "f4e385c61f1f43218c8d2b098711ba66",
 }
 export const WECHAT = {
     appid: "<your_appid>",
@@ -21,9 +21,9 @@ export const ASSISTANT = {
     username: "apikey",
     password: "QUpe5bls21WCkn1KQ8eIDu2cJWGYyENFyLCwejmu6fG7",
     url: "https://gateway-tok.watsonplatform.net/assistant/api",
-    version: "2019-03-21",
+    version: "2018-11-08",
     assistantId: "0bef08d8-1ca8-409e-9d48-89d7711663bf"
 }
 
-export const shopServiceUrl = "https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
-export const sessionServiceUrl = "https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
+export const shopServiceUrl = "http://417c17dd.ngrok.io/paas-hw1-22-232110/us-central1/handOverToShop"
+export const sessionServiceUrl = "http://417c17dd.ngrok.io/paas-hw1-22-232110/us-central1/"

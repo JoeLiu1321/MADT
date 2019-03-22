@@ -3,7 +3,7 @@ const qs = require('querystring');
 import axios from 'axios'
 
 import { LINE } from "./chatbotConfig"
-import { ReplyMessage} from "./appsModel"
+import {ReplyMessage} from "./appsModel"
 
 export const toTextMessage = (replyMessage: ReplyMessage): Message => {
     const textMessage: Message = {

@@ -2,7 +2,6 @@ import * as lineService from "./lineService"
 import * as weChatService from "./weChatService"
 import { DialogMessage } from "./appsModel"
 
-
 export const pushMessage = async (dialogMessage: DialogMessage|any) => {
     if (!Array.isArray(dialogMessage.replyMessage)){
         dialogMessage.replyMessage=[dialogMessage.replyMessage]
