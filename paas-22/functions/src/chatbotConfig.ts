@@ -16,3 +16,5 @@ export const DIALOGFLOW = {
     projectId: "paas-hw1-22-232110",
     languageCode: 'zh-TW'
 }
+
+export const paymentServiceUrl = "https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
