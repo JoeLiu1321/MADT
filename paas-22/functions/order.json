@@ -1,0 +1,20 @@
+{"order":
+    [
+      {
+          "orderId":"1",
+          "shopId":"107598063",
+          "product":"幸福一生",
+          "price":5000,
+          "consumerId":"U4b1a50220331b00658160849e49605bf",
+          "isPay":true  
+      },
+      {
+          "orderId":"2",
+          "shopId":"107598063",
+          "product":"幸福一生",
+          "price":5000,
+          "consumerId":"U4b1a",
+          "isPay":false  
+      }
+    ]
+  }

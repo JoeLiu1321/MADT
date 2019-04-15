@@ -1,26 +1,13 @@
 import * as functions from "firebase-functions"
-const dialogflow=require("dialogflow")
-import * as assistantV2 from "watson-developer-cloud/assistant/v2"
-import { DIALOGFLOW , ASSISTANT, shopServiceUrl, sessionServiceUrl } from "./chatbotConfig"
-
-import { DialogMessage } from "./appsModel"
-import * as pushService from "./pushService"
 import * as paymentService from "./paymentService"
-import * as Cache from "node-cache"
+import * as orderService from "./orderService"
 import axios from "axios"
 
-const cache = new Cache({ stdTTL: 300, checkperiod: 0 })
+import { insuranceServiceUrl/*, sessionServiceUrl*/ } from "./paymentConfig"
+import { DialogMessage } from "../dialogMessage"
+import { dialogAgent } from "./dialogAgent"
 
-const assistant = new assistantV2({
-    username: ASSISTANT.username,
-    password: ASSISTANT.password,
-    url: ASSISTANT.url,
-    version: ASSISTANT.version
-});
-
-const sessionClient = new dialogflow.SessionsClient({ keyFilename: DIALOGFLOW.path });
-
-export const messageDispatcher = (dialogMessage: DialogMessage|any) => {
+export const messageDispatcher = (dialogMessage: DialogMessage|any): void => {
     const request = {
         input: {
             text: dialogMessage.userMessage.intent,
@@ -30,10 +17,13 @@ export const messageDispatcher = (dialogMessage: DialogMessage|any) => {
         }
     }
     dialogMessage.agent = "ibmAssistant"
-    dialogAgent(request, dialogMessage)
+    dialogAgent(request, dialogMessage).then(response => {
+        if (response.output.actions)
+            actionDispatcher(response, dialogMessage)
+    })
 }
 
-const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
+const actionDispatcher = (response:any, dialogMessage: DialogMessage|any): void => {
     let balance
     let minBalance
     let totalBalance
@@ -42,6 +32,7 @@ const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
         case "balance":
             balance = paymentService.getBalance()
             minBalance = paymentService.getMininumBalance()
+            
             result_variable.result = {
                 balance: balance,
                 minBalance: minBalance
@@ -68,20 +59,74 @@ const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
             result_variable.result = {
                 balance: balance,
                 price: price,
-                totalBalance: totalBalance
+                totalBalance: totalBalance,
+                isPay:true
             }
-            axios.post(sessionServiceUrl + "deleteSessionId", { userId: dialogMessage.userId })
+            console.log("pay---")
+            // axios.delete(sessionServiceUrl + "sessionId" + `?userId=${dialogMessage.userId}`)
             break
         case "handOver":
             const shop = response.output.actions[0].parameters.shop
             if (shop == "保險商店") {
-                axios.post(shopServiceUrl, {
+                axios.post(insuranceServiceUrl, {
                     shopMessage: {
                         channel: dialogMessage.channel,
                         userId: dialogMessage.userId,
                         event: "welcome"
                     }
                 })
+            }
+            break
+        case "order":
+            let orders=orderService.getAllOrdersByConsumerId(dialogMessage.userId)
+            result_variable.result = {
+                order:orders
+            }
+            // orderService.addOrder({
+            //     "orderId":"1",
+            //     "shopId":"107598063",
+            //     "product":"幸福一生",
+            //     "price":5000,
+            //     "consumerId":"U4b1a50220331b00658160849e49605bf",
+            //     "isPay":true  
+            // })
+            break
+        case "payForOrder":
+            let unPayOrders=orderService.getUnpayOrder(dialogMessage.userId)
+            let orderCount=unPayOrders.length
+            // for(const order of unPayOrders)
+            //     console.log(order)
+            console.log("UnPay = "+orderCount)
+            result_variable.result={
+                unPayOrder:unPayOrders,
+                hasOrder:orderCount
+            }
+            break
+
+        case "askOrderId":
+            console.log("askorderId")
+            console.log("user input : "+dialogMessage.userMessage.intent)
+            let orderId=dialogMessage.userMessage.intent
+            result_variable.result={
+                isValid:1
+            }
+            let order=orderService.getOrderByOrderId(orderId)
+            if(order){
+                balance=paymentService.getBalance()
+                const orderPrice=order.price
+                totalBalance=balance-orderPrice
+                console.log("getorderId")
+                result_variable.result={
+                    isValid:0,
+                    isPay:true,
+                    balance: balance,
+                    price: orderPrice,
+                    totalBalance:totalBalance
+                }
+                result_variable.product={
+                    price:orderPrice,
+                    totalBalance:totalBalance
+                }
             }
             break
     }
@@ -96,85 +141,12 @@ const actionDispatcher = (response:any, dialogMessage: DialogMessage) => {
             }
         }
         dialogMessage.agent = "ibmAssistant"
-        dialogAgent(request, dialogMessage)
-    }
-}
-
-const dialogAgent = async (request:any, dialogMessage: DialogMessage) => {
-    switch (dialogMessage.agent){
-        case "dialogFlow":
-            return sessionClient.detectIntent(request).then(async (responses:any) => {
-                const result = responses[0].queryResult
-                const fulfillmentMessages = result.fulfillmentMessages
-                let replyMessages = []
-                let hasDynamicMessage = false
-                for (const fulfillmentMessage of fulfillmentMessages) {
-                    let message = fulfillmentMessage.text.text[0].replace(/\\n/g, '\n')
-                    if (message) {
-                        if (message.includes("%"))
-                            hasDynamicMessage = true
-                        replyMessages.push({ type: "text", message: message })
-                    }
-                }
-
-                dialogMessage.replyMessage = replyMessages
-                if (!hasDynamicMessage)
-                    pushService.pushMessage(dialogMessage)
-                if (result.action)
-                    actionDispatcher(result, dialogMessage)
-                return result
-            }).catch((err:any) => console.log(err));
-            break
-        case "ibmAssistant":
-            const sessionId = await axios.post(sessionServiceUrl + "getSessionId", { userId: dialogMessage.userId }).then(result => {
-                return result.data as string
-            })
-            assistant.message(
-                {
-                    input: request.input,
-                    context: request.context,
-                    assistant_id: ASSISTANT.assistantId,
-                    session_id: sessionId
-                }, async (err, response:any) => {
-                    const messages = response.output.generic
-                    let replyMessages = []
-                    for (const message of messages) {
-                        if (message) {
-                            replyMessages.push({ type: "text", message: message.text })
-                        }
-                    }
-                    dialogMessage.replyMessage = replyMessages
-                    pushService.pushMessage(dialogMessage)
-                    if (response.output.actions)
-                        await actionDispatcher(response, dialogMessage)
-                })
-            break
-    }
-}
-
-export const getSessionId = functions.https.onRequest((req, res) => {
-    const userId = req.body.userId
-    const sessionId = cache.get(userId)
-    if (!sessionId) {
-        assistant.createSession({ assistant_id: ASSISTANT.assistantId }, (err, result:any) => {
-            cache.set(userId, result.session_id, 300)
-            res.send(result.session_id)
+        dialogAgent(request, dialogMessage).then(response => {
+            if (response.output.actions)
+                actionDispatcher(response, dialogMessage)
         })
     }
-    else {
-        res.send(sessionId)
-    }
-})
-
-export const deleteSessionId = functions.https.onRequest((req, res) => {
-    const userId = req.body.userId
-    const sessionId = cache.get(userId)
-    if (sessionId) {
-        cache.del(userId)
-    }
-    res.sendStatus(200)
-})
-
+}
 
 export const handOverToPayment = functions.https.onRequest((req, res) => {
     const shopMessage = req.body.shopMessage
@@ -196,7 +168,10 @@ export const handOverToPayment = functions.https.onRequest((req, res) => {
         }
     }
     dialogMessage.agent = "ibmAssistant"
-    dialogAgent(request, dialogMessage)
+    dialogAgent(request, dialogMessage).then(response => {
+        if (response.output.actions)
+            actionDispatcher(response, dialogMessage)
+    })
     res.sendStatus(200)
 })
 

@@ -1,15 +1,15 @@
 import * as functions from 'firebase-functions'
 import { WebhookEvent, validateSignature } from "@line/bot-sdk"
 
-import { LINE } from "./chatbotConfig"
 import * as chatBotDialog from "./chatBotDialog"
-import * as pushService from "./pushService"
+import * as dialogAgent from "./dialogAgent"
 
-import { DialogMessage } from "./appsModel"
+import { shop } from "./insuranceConfig"
+import { DialogMessage } from "../dialogMessage"
 
 export const lineWebhook = functions.https.onRequest((req, res) => {
     const signature = req.headers["x-line-signature"] as string
-    if (validateSignature(JSON.stringify(req.body), LINE.channelSecret, signature)) {
+    if (validateSignature(JSON.stringify(req.body), shop.line.channelSecret, signature)) {
         const events = req.body.events as Array<WebhookEvent>
         for (const event of events)
             eventDispatcher(event)
@@ -20,7 +20,7 @@ export const lineWebhook = functions.https.onRequest((req, res) => {
 })
 
 const eventDispatcher = (event: WebhookEvent): void => {
-    let userId:any
+    let userId=""
     if (event.source.type == "user") {
         userId = event.source.userId
     }
@@ -46,7 +46,7 @@ const eventDispatcher = (event: WebhookEvent): void => {
                         type: "text",
                         intent: event.message.text
                     },
-                    replyMessage:{}
+                    replyMessages:{}
                 } as DialogMessage
                 chatBotDialog.messageDispatcher(dialogMessage)
             }
@@ -55,27 +55,27 @@ const eventDispatcher = (event: WebhookEvent): void => {
 }
 
 const follow = (userId: string) => {
-    const message = `感謝你關注《智能商城》\n你的LineId如下:\n${userId}`
+    const message = `感謝你關注《${shop.name}》\n你的LineId如下:\n${userId}`
     const dialogMessage = {
         channel: "Line",
         userId: userId,
-        replyMessage: {
+        replyMessages: [{
             type: "text",
             message: message
-        }
+        }]
     } as DialogMessage
-    pushService.pushMessage(dialogMessage)
+    dialogAgent.publish(dialogMessage)
 }
 
 const join = (userId: string) => {
-    const message = `感謝你把《智能商城》加入群組\n你的GroupId如下:\n${userId}`
+    const message = `感謝你把《${shop.name}》加入群組\n你的GroupId如下:\n${userId}`
     const dialogMessage = {
         channel: "Line",
         userId: userId,
-        replyMessage: {
+        replyMessages: [{
             type: "text",
             message: message
-        }
+        }]
     } as DialogMessage
-    pushService.pushMessage(dialogMessage)
+    dialogAgent.publish(dialogMessage)
 }

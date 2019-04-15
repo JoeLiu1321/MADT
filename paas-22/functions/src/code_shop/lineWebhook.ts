@@ -1,10 +1,11 @@
 import * as functions from 'firebase-functions'
 import { WebhookEvent, validateSignature } from "@line/bot-sdk"
 
-import { shop } from "./paymentConfig"
-import { DialogMessage } from "../dialogMessage"
 import * as chatBotDialog from "./chatBotDialog"
 import * as dialogAgent from "./dialogAgent"
+
+import { shop } from "./insuranceConfig"
+import { DialogMessage } from "../dialogMessage"
 
 export const lineWebhook = functions.https.onRequest((req, res) => {
     const signature = req.headers["x-line-signature"] as string
@@ -19,13 +20,14 @@ export const lineWebhook = functions.https.onRequest((req, res) => {
 })
 
 const eventDispatcher = (event: WebhookEvent): void => {
-    let userId=""
+    let userId:any
     if (event.source.type == "user") {
         userId = event.source.userId
     }
     else if (event.source.type == "group") {
         userId = event.source.groupId
     }
+    console.log(userId)
     switch (event.type) {
         case "follow":
             follow(userId)
@@ -36,7 +38,6 @@ const eventDispatcher = (event: WebhookEvent): void => {
             join(userId)
             break
         case "message":
-            console.log(userId)
             if (event.message.type == "text") {
                 const dialogMessage = {
                     channel: "Line",
@@ -53,7 +54,7 @@ const eventDispatcher = (event: WebhookEvent): void => {
     }
 }
 
-const follow = (userId: string): void => {
+const follow = (userId: string) => {
     const message = `感謝你關注《${shop.name}》\n你的LineId如下:\n${userId}`
     const dialogMessage = {
         channel: "Line",
@@ -66,7 +67,7 @@ const follow = (userId: string): void => {
     dialogAgent.publish(dialogMessage)
 }
 
-const join = (userId: string): void => {
+const join = (userId: string) => {
     const message = `感謝你把《${shop.name}》加入群組\n你的GroupId如下:\n${userId}`
     const dialogMessage = {
         channel: "Line",

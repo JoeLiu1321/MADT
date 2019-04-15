@@ -1,17 +1,18 @@
 import * as functions from "firebase-functions"
+const dialogflow = require ("dialogflow")
 import * as structjson from "./structjson"
-import { DIALOGFLOW, paymentServiceUrl } from "./chatbotConfig"
+import axios from "axios"
 
-import * as pushService from "./pushService"
-import { DialogMessage } from "./appsModel"
+import { DIALOGFLOW, paymentServiceUrl } from "./insuranceConfig"
+import { dialogAgent, publish } from "./dialogAgent"
+import { DialogMessage } from "../dialogMessage"
 import * as productService from "./productService"
 
-import axios from "axios"
-const dialogflow=require("dialogflow")
-
 const sessionClient = new dialogflow.SessionsClient({ keyFilename: DIALOGFLOW.path });
+let product:any ;
+let price:any;
 
-export const messageDispatcher = (dialogMessage: DialogMessage|any) => {
+export const messageDispatcher = (dialogMessage: DialogMessage|any): void => {
     const sessionId = dialogMessage.userId
     const sessionPath = sessionClient.sessionPath(DIALOGFLOW.projectId, sessionId)
     const queryInput = {
@@ -27,37 +28,60 @@ export const messageDispatcher = (dialogMessage: DialogMessage|any) => {
     }
 
     dialogMessage.agent = "dialogFlow"
-    dialogflowAgent(request, dialogMessage)
+    dialogAgent(request, dialogMessage).then(result => {
+        if (result.action)
+            actionDispatcher(result, dialogMessage)
+    })
 }
 
-const actionDispatcher = async (queryResult:any, dialogMessage: DialogMessage|any) => {
+const actionDispatcher = async (queryResult:any, dialogMessage: DialogMessage|any): Promise<void> => {
     const parameters = structjson.structProtoToJson(queryResult.parameters) as any
     let events = []
-    let price
     switch (queryResult.action) {
         case "welcome":
+            events.push("showService")
+            events.push("ask4Service")
+            break
+        case "ask4Service-class":
             events.push("showProducts")
             events.push("ask4Buy")
             break
+        case "ask4Service-customer":
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{price}%', price)
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{product}%', product)
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{price}%', price)
+            publish(dialogMessage)
+            events.push("reAsk")
+            break
+        case "ask4Service-owner.ask4Service-owner-custom":
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{price}%', price)
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{product}%', product)
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{price}%', price)
+            publish(dialogMessage)
+            events.push("reAsk")
+            break
         case "buyProduct":
+            product = parameters.product
             price = productService.getPrice(parameters.product)
-            dialogMessage.replyMessage[0].message = dialogMessage.replyMessage[0].message.replace('%{price}%', price)
-            pushService.pushMessage(dialogMessage)
-            axios.post(paymentServiceUrl, {
+            dialogMessage.replyMessages[0].message = dialogMessage.replyMessages[0].message.replace('%{price}%', price)
+            publish(dialogMessage)
+            break
+        case "transfer":
+            axios.post(paymentServiceUrl + "handOverToPayment", {
                 shopMessage: {
                     channel: dialogMessage.channel,
                     userId: dialogMessage.userId,
                     event: "ask4Pay",
                     product: {
-                        name: parameters.product,
+                        name: product,
                         price: price
                     }
                 }
             })
             break
         case "error":
-            events.push("showProducts")
-            events.push("ask4Buy")
+            events.push("showService")
+            events.push("ask4Service")
             break
     }
 
@@ -78,38 +102,16 @@ const actionDispatcher = async (queryResult:any, dialogMessage: DialogMessage|an
             }
             console.log(event)
             dialogMessage.agent = "dialogFlow"
-            await dialogflowAgent(request, dialogMessage)
+            let result = await dialogAgent(request, dialogMessage)
+            if (result.action)
+                actionDispatcher(result, dialogMessage)
         }
     }
 }
 
-const dialogflowAgent = (request:any, dialogMessage: DialogMessage) => {
-    return sessionClient.detectIntent(request).then(async (responses:any) => {
-        const result = responses[0].queryResult
-        const fulfillmentMessages = result.fulfillmentMessages
-        let replyMessages = []
-        let hasDynamicMessage = false
-        for (const fulfillmentMessage of fulfillmentMessages) {
-            let message = fulfillmentMessage.text.text[0].replace(/\\n/g, '\n')
-            if (message) {
-                if (message.includes("%"))
-                    hasDynamicMessage = true
-                replyMessages.push({ type: "text", message: message })
-            }
-        }
-
-        dialogMessage.replyMessage = replyMessages
-        if (!hasDynamicMessage)
-            pushService.pushMessage(dialogMessage)
-        if (result.action)
-            actionDispatcher(result, dialogMessage)
-        return result
-    }).catch((err:any) => console.log(err));
-}
-
 export const handOverToShop = functions.https.onRequest((req, res) => {
     const shopMessage = req.body.shopMessage
-    const dialogMessage : DialogMessage = {
+    const dialogMessage: DialogMessage = {
         channel: shopMessage.channel,
         userId: shopMessage.userId
     }
@@ -126,6 +128,9 @@ export const handOverToShop = functions.https.onRequest((req, res) => {
         queryInput: queryInput
     }
     dialogMessage.agent = "dialogFlow"
-    dialogflowAgent(request, dialogMessage)
+    dialogAgent(request, dialogMessage).then(result => {
+        if (result.action)
+            actionDispatcher(result, dialogMessage)
+    })
     res.sendStatus(200)
 })

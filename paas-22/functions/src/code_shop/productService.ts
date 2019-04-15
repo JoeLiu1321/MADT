@@ -1,13 +1,13 @@
-export const getPrice = (productName: string) => {
-    let price
+export const getPrice = (productName: string): number => {
+    let price:any
     switch (productName) {
-        case "幸福一生":
+        case "C++入門":
             price = 10000
             break
-        case "健康致富":
+        case "Java新手":
             price = 20000
             break
-        case "安養久久":
+        case "Python切入":
             price = 30000
             break
     }
