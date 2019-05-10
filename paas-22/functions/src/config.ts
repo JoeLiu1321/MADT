@@ -21,6 +21,7 @@ export const pubsubConfig = {
 export const shops=
 {
     payment:{
+        id:"12",
         shopId: "payment",
         name: "鄉民寶支付",
         line: {
@@ -29,7 +30,8 @@ export const shops=
         }
     },
     codeShop:{
-        shopId: "codeShop",
+        id:"11",
+        shopId: "insurance",
         name: "幽默學程式",
         line: {
             channelId: "1649586736",
@@ -37,6 +39,7 @@ export const shops=
         }
     },
     carrier:{
+        id:"13",
         shopId: "carrier",
         name: "bug carrier",
         line: {
@@ -46,9 +49,14 @@ export const shops=
     }
 }
 
+export const APIGEE = {
+    url:"https://paastaipeitech-eval-test.apigee.net/",
+    apikey:"B9FKlwZbHXhnG3SE6Jj96aH0OS7YWwiI"
+}
+
 export const topicName = "topicForChat"
 export const paymentSub="payment"
 export const codeShopSub="codeShop"
 export const cloud="https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
-export const local="http://8c04760d.ngrok.io/paas-hw1-22-232110/us-central1/"
+export const local="http://45f4cb86.ngrok.io/paas-hw1-22-232110/us-central1/"
 export const url=cloud

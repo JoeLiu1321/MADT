@@ -3,7 +3,7 @@ import axios from "axios"
 import { dialogAgent } from "./paymentDialogAgent"
 import { pushMessage } from "./pushService"
 import { DialogMessage, ReplyMessage, FollowChatModel, BankingChatModel, HandoverModel } from "./paymentModel"
-import { shop, mallFlowUrl, handoverUrl, carrierShopId, pubsubConfig, paymentSubName } from "./paymentConfig"
+import { shop, mallFlowUrl,carrierShopId, pubsubConfig, paymentSubName,APIGEE,mallServiceUrl } from "./paymentConfig"
 
 const googlePubsub = new PubSub({ keyFilename: pubsubConfig.serviceAccountPath })
 const paymentSub = googlePubsub.subscription(pubsubConfig.subPath + paymentSubName)
@@ -44,45 +44,51 @@ export const actionDispatcher = async (response:any, dialogMessage: DialogMessag
     const parameters = response.output.actions[0].parameters
     let followChatModel
     let bankingChatModel
+    let path:any
     let result_variable = {} as any
+    const headers = {
+        "x-apikey": APIGEE.apikey
+    }
+    console.log("action : "+action)
     switch (action) {
         case "follow":
             followChatModel = {
-                shopId: shop.shopId,
+                shopId: shop.id,
                 channel: dialogMessage.channel,
                 chatId: dialogMessage.chatId,
                 customerPhone: parameters.phone
             } as FollowChatModel
-            await axios.post(mallFlowUrl + `flow/bindCustomer`, { followChatModel }).then(result => {
+            path = 'flow/bindCustomer'
+            await axios.post(mallFlowUrl + path, { followChatModel },{headers}).then(result => {
                 const followChatModel = result.data.followChatModel as FollowChatModel
                 result_variable.result = followChatModel
             }).catch(error => {
-                const replyMessage: ReplyMessage = {
-                    channel: dialogMessage.channel,
-                    chatId: dialogMessage.chatId,
-                    replyMessages: [{ type: "text", message: error }]
-                }
-                pushMessage(replyMessage)
+                errorHandle(dialogMessage, error.response, path)
             })
             break
         case "unfollow":
             followChatModel = {
-                shopId: shop.shopId,
+                shopId: shop.id,
                 channel: dialogMessage.channel,
                 chatId: dialogMessage.chatId
             } as FollowChatModel
-            axios.post(mallFlowUrl + `flow/unbindCustomer`, { followChatModel })
+            path = `flow/unbindCustomer`
+            await axios.post(mallFlowUrl + path, { followChatModel },{headers}).then(result => {
+            }).catch(error => {
+                errorHandle(dialogMessage, error.response, path)
+            })
             break
         case "pay":
             console.log(parameters.productPrice)
             bankingChatModel = {
                 transactionId: parameters.transactionId,
-                shopId: parameters.shopId,
+                shopId: shop.id,
                 chatId: dialogMessage.chatId,
                 action: "pay",
                 amount: parameters.productPrice
             } as BankingChatModel
-            await axios.post(mallFlowUrl + `flow/banking`, { bankingChatModel }).then(result => {
+            path = `flow/banking`
+            await axios.post(mallFlowUrl + path, { bankingChatModel },{headers}).then(result => {
                 const bankingChatModel = result.data.bankingChatModel
                 result_variable.result = bankingChatModel
                 const handoverModel: HandoverModel = {
@@ -94,26 +100,34 @@ export const actionDispatcher = async (response:any, dialogMessage: DialogMessag
                     key: parameters.productName,
                     value: parameters.productPrice
                 }
-                axios.post(handoverUrl + `pubsub/shopHandover`, { handoverModel })
+                path = `pubsub/shopHandover`
+                axios.post(mallFlowUrl + path, { handoverModel },{headers}).catch(error => {
+                    errorHandle(dialogMessage, error.response, path)
+                })
+            }).catch(error => {
+                errorHandle(dialogMessage, error.response, path)
             })
             break
         case "deposit":
             bankingChatModel = {
-                shopId: shop.shopId,
+                shopId: shop.id,
                 chatId: dialogMessage.chatId,
                 action: "deposit",
                 amount: parameters.amount
             } as BankingChatModel
-            await axios.post(mallFlowUrl + `flow/banking`, { bankingChatModel }).then(result => {
+            path = `flow/banking`
+            await axios.post(mallFlowUrl + path, { bankingChatModel },{headers}).then(result => {
                 const bankingChatModel = result.data.bankingChatModel
                 result_variable.result = bankingChatModel
+            }).catch(error => {
+                errorHandle(dialogMessage, error.response, path)
             })
             break
         default:
             break
     }
 
-    if (result_variable) {
+    if (Object.keys(result_variable).length > 0) {
         const request = {
             context: {
                 skills: {
@@ -130,16 +144,48 @@ export const actionDispatcher = async (response:any, dialogMessage: DialogMessag
     }
 }
 
+const errorHandle = (dialogMessage: DialogMessage, error: any, path: string) => {
+    let errorMessageToCustomer
+    const errorCode = error.data.fault.detail.errorcode as string
+    switch (error.status) {
+        case 401:
+            errorMessageToCustomer = "系統錯誤\n非常抱歉，基於《授權》政策，本店目前無法提供此服務，請與客服人員取得進一步訊息。"
+            break
+        case 429:
+            if (errorCode.includes("QuotaViolation")) {
+                switch (path){
+                    case "flow/bindCustomer":
+                        errorMessageToCustomer = "系統錯誤\n非常抱歉，本店目前無法提供[新增顧客服務]，請與客服人員取得進一步訊息。"
+                        break
+                    case "flow/banking":
+                        errorMessageToCustomer = "系統錯誤\n非常抱歉，本店目前無法提供[支付服務]，請與客服人員取得進一步訊息。"
+                        break
+                }
+            }
+            else {
+                errorMessageToCustomer = "系統錯誤\n非常抱歉，受限於《流量管制》，本店目前無法同時提供大量顧客同時上線，敬請稍候再試。"
+            }
+            break
+    }
+    let replyMessages:any = [{ type: "text", message: errorMessageToCustomer }]
+    const replyMessage: ReplyMessage = {
+        channel: dialogMessage.channel,
+        chatId: dialogMessage.chatId,
+        replyMessages: replyMessages
+    }
+    pushMessage(replyMessage)
+}
+
 paymentSub.on("message", async (message:any) => {
     const handoverModel = JSON.parse(Buffer.from(message.data, "base64").toString()) as HandoverModel
     let result_variable = {} as any
     if (handoverModel.toShopId == shop.shopId) {
-        const chatId = await axios.post(mallFlowUrl + "flow/getChatId", { shopId: shop.shopId, channel: "Line", customerId: handoverModel.customerId }).then(result => {
-            return result.data.chatId
+        const customer = await axios.get(mallServiceUrl + `service/payment/customers?key=memberId&value=${handoverModel.customerId}`).then(result => {
+            return result.data.customers[0]
         })
         const dialogMessage: DialogMessage = {
             channel: "Line",
-            chatId: chatId,
+            chatId: customer.lineId,
             timestamp: new Date().getTime()
         }
         result_variable.transactionId = handoverModel.transactionId
