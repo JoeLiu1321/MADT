@@ -138,6 +138,7 @@ export const actionDispatcher = async (response:any, dialogMessage: DialogMessag
             }
         }
         dialogAgent(request, dialogMessage).then(response => {
+            console.log(response)
             if (response.output.actions)
                 actionDispatcher(response, dialogMessage)
         })

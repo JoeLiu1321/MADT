@@ -17,18 +17,18 @@ export const bindCustomer = functions.https.onRequest(async (req:any, res:any) =
         })
         if (member) {
             let path=followChatModel.shopId
-            // switch (followChatModel.shopId) {
-            //     case "insurance":
-            //         path = "insurance"
-            //         break
-            //     case "12":
-            //         path = "payment"
-            //         break
-            //     case "13":
-            //         path = "carrier"
-            //         break
+            switch (followChatModel.shopId) {
+                case "11":
+                    path = "insurance"
+                    break
+                case "12":
+                    path = "payment"
+                    break
+                case "13":
+                    path = "carrier"
+                    break
 
-            // }
+            }
             let customer: Customer|any = await axios.get(mallServiceUrl + `service/${path}/customers?key=memberId&value=${member.memberId}`).then(result => {
                 return result.data.customers[0] as Customer
             })
@@ -52,12 +52,12 @@ export const bindCustomer = functions.https.onRequest(async (req:any, res:any) =
                 }
                 customer[chatIdKey] = followChatModel.chatId
                 switch (followChatModel.shopId) {
-                    case "insurance":
+                    case "11":
                         break
-                    case "payment":
+                    case "12":
                         customer.account = { balance: 100000 }
                         break
-                    case "carrier":
+                    case "13":
                         customer.address = {
                             home: "台北市大安區愛國東路三段2號",
                             office: "台北市大安區忠孝東路三段1號"
@@ -88,17 +88,17 @@ export const bindCustomer = functions.https.onRequest(async (req:any, res:any) =
 export const unbindCustomer = functions.https.onRequest(async (req, res) => {
     const followChatModel = req.body.followChatModel as FollowChatModel
     let path=followChatModel.shopId
-    // switch (followChatModel.shopId) {
-    //     case "insurance":
-    //         path = "insurance"
-    //         break
-    //     case "payment":
-    //         path = "payment"
-    //         break
-    //     case "13":
-    //         path = "carrier"
-    //         break
-    // }
+    switch (followChatModel.shopId) {
+        case "11":
+            path = "insurance"
+            break
+        case "12":
+            path = "payment"
+            break
+        case "13":
+            path = "carrier"
+            break
+    }
     const customer: Customer = await axios.get(mallServiceUrl + `service/${path}/customers?key=${followChatModel.channel == "Line" ? "lineId" : "weChatId"}&value=${followChatModel.chatId}`).then(result => {
         return result.data.customers[0] as Customer
     })

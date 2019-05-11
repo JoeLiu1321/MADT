@@ -39,6 +39,7 @@ export const dialogAgent = async (request:any, dialogMessage: DialogMessage): Pr
                 chatId: dialogMessage.chatId,
                 replyMessages: replyMessages
             }
+            console.log(replyMessage)
             pushMessage(replyMessage)
             resolve(response)
         })
