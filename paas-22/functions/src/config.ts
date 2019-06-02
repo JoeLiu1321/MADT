@@ -46,6 +46,14 @@ export const shops=
             channelId: "1649586736",
             channelSecret: "d302bfd9616f975ca87c8aa921640a8b",
         }
+    },
+    shop3c:{
+        id: "14",
+        name: "智能3c",
+        line: {
+            channelId: "1649586736",
+            channelSecret: "d302bfd9616f975ca87c8aa921640a8b"
+        }
     }
 }
 
@@ -54,14 +62,23 @@ export const APIGEE = {
     apikey:"J2Gq3M2NKlLFcpFyisqlRZB82vdkPr2a"
 }
 
-// export const APIGEE = {
-//     url:"https://paastaipeitech-eval-2019apps.apigee.io/",
-//     apikey:"123321"
-// }
+export const iMallAccount = {
+    name: "superUser",
+    password: "super",
+    token: "2019Apps",
+    address: "8a5e1e8e94aa15cdb9bf7b2621d32469bcd2056e"
+}
+
+export const accountBalanceContract = {
+    name: "AccountBalance",
+    address: "2aabee29fa5d198758e8bbe62c2297030a44dd76"
+}
+
+export const blockChainUrl = "http://104.198.234.134/bloc/v2.2"
 
 export const topicName = "topicForChat"
 export const paymentSub="payment"
 export const codeShopSub="codeShop"
 export const cloud="https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
-export const local="http://816bb2e4.ngrok.io/paas-hw1-22-232110/us-central1/"
+export const local="http://afbdf010.ngrok.io/paas-hw1-22-232110/us-central1/"
 export const url=cloud
