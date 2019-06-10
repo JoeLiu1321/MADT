@@ -30,3 +30,8 @@ export type Record = {
     action:string
     value: number
 }
+
+export type Friend={
+    name:string
+    id:string
+}

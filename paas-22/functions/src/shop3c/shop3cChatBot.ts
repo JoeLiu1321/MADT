@@ -153,6 +153,30 @@ export const actionDispatcher = async (response:any, dialogMessage: DialogMessag
                 errorHandle(dialogMessage, error.response, path)
             })
             break
+        case "gift":
+            path="flow/getCustomerFriend"
+            await axios.post(mallFlowUrl+path,{customer:"107598063"}).then(result=>{
+                let friends:any=""
+                for(const friend of result.data)
+                    friends=friends+friend.name+"\n"
+                result_variable.result=friends
+            })
+            break
+        case "friend":
+            path="flow/getCustomerFriend"
+            let friendName=parameters.friend
+            let isValid=1
+            await axios.post(mallFlowUrl+path,{customer:"107598063"}).then(result=>{
+                for(const friend of result.data){
+                    if(friend.name==friendName)
+                        isValid=0
+                }
+                result_variable.result={
+                    isFriend:isValid,
+                    friend:friendName
+                }
+            })
+            break
         default:
             break
     }

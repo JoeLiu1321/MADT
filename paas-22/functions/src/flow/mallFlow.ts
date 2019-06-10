@@ -199,3 +199,35 @@ export const carry = functions.https.onRequest((req, res) => {
         }
     })
 })
+
+export const getCustomerFriend = functions.https.onRequest((req, res)=>{
+    corsHandler(req, res, async () => {
+        const customerId=req.body.customer
+        let friends=await axios.get(mallServiceUrl + "service/mall/friends?value="+customerId).then(result => {
+            return result.data.friends
+            // return result.data.products[0] as Product
+        }) 
+        res.status(200).send(friends)
+
+    })
+})
+
+export const carryForGift=functions.https.onRequest((req,res)=>{
+    corsHandler(req, res, async () => {
+        const customerId=req.body.customer
+        let customers=await axios.get(mallServiceUrl + "service/shop3c/customers").then(result => {
+            return result.data.customers as Customer[]
+        }) 
+        let customerLineId:any
+        for(const customer of customers){
+            if(customer.memberId==customerId){
+                customerLineId=customer.lineId
+            }
+        }
+        if(customerLineId){
+            
+        }
+        res.status(200).send("fun")
+
+    })
+})

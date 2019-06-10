@@ -80,5 +80,5 @@ export const topicName = "topicForChat"
 export const paymentSub="payment"
 export const codeShopSub="codeShop"
 export const cloud="https://us-central1-paas-hw1-22-232110.cloudfunctions.net/"
-export const local="http://afbdf010.ngrok.io/paas-hw1-22-232110/us-central1/"
-export const url=cloud
+export const local="http://94d8d571.ngrok.io/paas-hw1-22-232110/us-central1/"
+export const url=local
