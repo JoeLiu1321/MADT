@@ -21,7 +21,7 @@
     "@types/uuid": "^3.4.4",
     "@types/express": "4.16.1",
     "uuid": "3.3.2",
-    "express": "4.16.4",
+    "express": "4.17.3",
     "axios": "^0.18.0",
     "dialogflow": "^0.8.0",
     "firebase-admin": "7.0.0",
